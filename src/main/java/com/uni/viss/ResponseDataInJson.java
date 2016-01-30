@@ -6,6 +6,7 @@ public class ResponseDataInJson {
 	private String base64Img;
 	private byte[] clickedImage;
 	private ArrayList<BookInfo> booksResult;
+	private ArrayList<String> keywords;
 	private String success;
 	private String error;
 
@@ -47,5 +48,13 @@ public class ResponseDataInJson {
 
 	public void setClickedImage(byte[] clickedImage) {
 		this.clickedImage = clickedImage;
+	}
+
+	public ArrayList<String> getKeywords() {
+		return keywords;
+	}
+
+	public void setKeywords(ArrayList<String> keywords) {
+		this.keywords = keywords;
 	}	
 }

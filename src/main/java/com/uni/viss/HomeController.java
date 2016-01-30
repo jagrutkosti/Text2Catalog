@@ -101,6 +101,7 @@ public class HomeController implements ServletContextAware{
 	                	                
 	                //Converting the image to Base64 encoded string	              
 	                String base64Encoded = Base64.encodeBase64String(responseObject.getClickedImage());
+	                responseObject.setClickedImage(null);
 	                responseObject.setBase64Img(base64Encoded);
 	                
 	                //Get plain text string after performing OCR
@@ -114,13 +115,16 @@ public class HomeController implements ServletContextAware{
 		                keywordsAsJson = keywordsAsJson.getJSONObject("keywords");
 		                JSONArray keywordsArray = keywordsAsJson.getJSONArray("keyword");
 		                finalBookList = new ArrayList<BookInfo>();
+		                ArrayList<String> keywords = new ArrayList<String>();
 		                for(int i=0; i<keywordsArray.length(); i++){
 		                	if(finalBookList.size() < 50){
 		                		JSONObject tempObj = (JSONObject)keywordsArray.get(i);
-			                	System.out.println("Text: " + tempObj.getString("text"));
+		                		String keyword = tempObj.getString("text");
+			                	System.out.println("Text: " + keyword);
 			                	System.out.println("Relevance: " + tempObj.getDouble("relevance"));	    
 			                	//Get the books based on keywords
-			                	getBooksByKeywords(tempObj.getString("text"), keywordsArray.length());
+			                	getBooksByKeywords(keyword, keywordsArray.length());
+			                	keywords.add(keyword);
 		                	}else{
 		                		break;
 		                	}
@@ -128,6 +132,7 @@ public class HomeController implements ServletContextAware{
 		                
 		                System.out.println("Server File Location=" + serverFile.getAbsolutePath());
 		                System.out.println("Final Books List Size::::::::::::::" + finalBookList.size());
+		                responseObject.setKeywords(keywords);
 		                responseObject.setBooksResult(finalBookList);
 		                responseObject.setSuccess("success");	                
 		                System.out.println("You successfully uploaded file=" + data.getOriginalFilename()); 
@@ -223,7 +228,7 @@ public class HomeController implements ServletContextAware{
 	public void getBooksByKeywords(String searchString, int keywordsLength){
 		int singleKeywordBookCount = 0;
 		String url = "https://openlibrary.org/search.json?title=";
-		url = url + URLEncoder.encode(searchString);
+		url = url + URLEncoder.encode(searchString) + "&page=1";
 		try {
 			URL urlObj = new URL(url);
 			HttpURLConnection con = (HttpURLConnection) urlObj.openConnection();			
@@ -245,9 +250,6 @@ public class HomeController implements ServletContextAware{
 				response.append(inputLine);
 			}
 			in.close();
-
-			//print result
-			System.out.println(response.toString());
 			
 			//convert into JSONObject
 			JSONObject resultJson = new JSONObject(response.toString());
@@ -261,47 +263,56 @@ public class HomeController implements ServletContextAware{
 				e.printStackTrace();
 			}
 			for(int i=0; i<booksArray.length();i++){
+				BookInfo singleBookInfo = new BookInfo();
 				try{
 					JSONObject singleBookInfoJson = (JSONObject)booksArray.get(i);
-
-					BookInfo singleBookInfo = new BookInfo();
-					singleBookInfo.setName(singleBookInfoJson.getString("title"));
-					singleBookInfo.setCoverId(singleBookInfoJson.getInt("cover_i"));
+					singleBookInfo.setName(singleBookInfoJson.getString("title"));					
+					String key = singleBookInfoJson.getString("key");
+					key = key.substring(key.indexOf('O'));
+					singleBookInfo.setOpenLibId(key);
+					try{
+						singleBookInfo.setCoverId(singleBookInfoJson.getInt("cover_i"));
+					}catch(JSONException e){
+						JSONArray authorNames = singleBookInfoJson.getJSONArray("author_name");
+						String author = "";
+						for(int j=0; j<authorNames.length();j++){
+							author = author + authorNames.getString(j);
+						}
+						singleBookInfo.setAuthor(author);
+					}					
 					JSONArray authorNames = singleBookInfoJson.getJSONArray("author_name");
 					String author = "";
 					for(int j=0; j<authorNames.length();j++){
 						author = author + authorNames.getString(j);
 					}
 					singleBookInfo.setAuthor(author);
-
-					singleBookInfo.setAssociatedKeywords(searchString);
-					int count = 0;
-					System.out.println("List Size:::"+finalBookList.size());
-					if(finalBookList.size() > 0 && singleBookInfo.getCoverId() != 1){
-						for(BookInfo b : finalBookList){
-							if(b.getCoverId() == 1){
-								continue;
-							}
-							else if(b.getCoverId() == singleBookInfo.getCoverId()){
-								String keywords = b.getAssociatedKeywords();
-								keywords = keywords + ", " + singleBookInfo.getAssociatedKeywords();
-								count++;
-								break;
-							}
-						}
-					}
-					if(count == 0){
-						finalBookList.add(singleBookInfo);
-						singleKeywordBookCount++;
-					}
-					if(singleKeywordBookCount > 5 && keywordsLength > 10){
-						break;
-					}
 				}catch(JSONException e){
 					e.printStackTrace();
 				}
-			}
-			
+				singleBookInfo.setAssociatedKeywords(searchString);
+				int count = 0;
+				System.out.println("List Size:::"+finalBookList.size());
+				if(finalBookList.size() > 0 && singleBookInfo.getOpenLibId() != null && singleBookInfo.getOpenLibId().length() > 0){
+					for(BookInfo b : finalBookList){
+						if(b.getOpenLibId() == null || b.getOpenLibId().length() < 1){
+							continue;
+						}
+						else if(b.getOpenLibId() == singleBookInfo.getOpenLibId()){
+							String keywords = b.getAssociatedKeywords();
+							keywords = keywords + ", " + singleBookInfo.getAssociatedKeywords();
+							count++;
+							break;
+						}
+					}
+				}
+				if(count == 0){
+					finalBookList.add(singleBookInfo);
+					singleKeywordBookCount++;
+				}
+				if(singleKeywordBookCount > 5 && keywordsLength > 10){
+					break;
+				}				
+			}			
 			
 		} catch (MalformedURLException e) {
 			// TODO Auto-generated catch block

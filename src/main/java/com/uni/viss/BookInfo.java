@@ -7,6 +7,7 @@ public class BookInfo {
 	private String isbn;
 	private String associatedKeywords;
 	private int coverId = 1;
+	private String openLibId;
 	
 	public String getName() {
 		return name;
@@ -43,6 +44,12 @@ public class BookInfo {
 	}
 	public void setCoverId(int coverId) {
 		this.coverId = coverId;
+	}
+	public String getOpenLibId() {
+		return openLibId;
+	}
+	public void setOpenLibId(String openLibId) {
+		this.openLibId = openLibId;
 	}
 	
 	
