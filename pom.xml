@@ -138,6 +138,18 @@
 		</dependency>
 		
 		<dependency>
+			<groupId>org.json</groupId>
+			<artifactId>json</artifactId>
+			<version>20140107</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>com.google.code.gson</groupId>
+			<artifactId>gson</artifactId>
+			<version>1.7.1</version>
+  		</dependency>
+  		
+		<dependency>
 			<groupId>commons-codec</groupId>
 			<artifactId>commons-codec</artifactId>
 			<version>1.10</version>
@@ -152,24 +164,22 @@
 			<systemPath>${project.basedir}/src/main/resources/aocr.jar</systemPath>
 		</dependency> -->
 	
-		<!-- Another OCR library -->
+		<!-- Tesseract OCR library -->
 		<dependency>
             <groupId>org.bytedeco.javacpp-presets</groupId>
             <artifactId>tesseract</artifactId>
             <version>3.04-1.1</version>
         </dependency>
 	
+		<!-- AlchemyAPI -->
 		<dependency>
-			<groupId>org.json</groupId>
-			<artifactId>json</artifactId>
-			<version>20140107</version>
+			<groupId>AlchemyAPI</groupId>
+			<artifactId>AlchemyAPI</artifactId>
+			<scope>system</scope>
+			<version>1.0</version>
+			<systemPath>${basedir}\src\main\webapp\WEB-INF\lib\AlchemyAPI.jar</systemPath>
 		</dependency>
 		
-		<dependency>
-			<groupId>com.google.code.gson</groupId>
-			<artifactId>gson</artifactId>
-			<version>1.7.1</version>
-  		</dependency>
 	</dependencies>
     <build>
         <plugins>

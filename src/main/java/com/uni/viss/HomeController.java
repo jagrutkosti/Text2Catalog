@@ -13,6 +13,7 @@ import java.text.DateFormat;
 
 import javax.imageio.ImageIO;
 import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
@@ -27,6 +28,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -38,6 +40,10 @@ import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 import org.apache.commons.codec.binary.Base64;
 import org.bytedeco.javacpp.*;
+import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.JsonProcessingException;
+import org.codehaus.jackson.map.ObjectMapper;
+
 import static org.bytedeco.javacpp.lept.*;
 import static org.bytedeco.javacpp.tesseract.*;
 import org.json.JSONArray;
@@ -75,37 +81,70 @@ public class HomeController implements ServletContextAware{
 	}
 	
 	@RequestMapping(value="getKeywordBooks", method = RequestMethod.POST)
-	public @ResponseBody ResponseDataInJson getKeywordBooks(@RequestParam("keyword")String keyword){		
+	public @ResponseBody ResponseDataInJson getKeywordBooks(@RequestBody String str){	
+		ObjectMapper objectMapper = new ObjectMapper();
+		JsonNode node;
+		ResponseDataInJson requestObject = new ResponseDataInJson();
+		String keyword = "";
+		try {
+			node = objectMapper.readTree(str);
+			requestObject = objectMapper.convertValue(node.get("dataFromClient"), ResponseDataInJson.class);
+			keyword = objectMapper.convertValue(node.get("keyword"), String.class);
+		} catch (JsonProcessingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
+		System.out.println("Request Object length::"+requestObject.getBooksResult().size());
 		System.out.println("Keyword::"+keyword);
 		ArrayList<BookInfo> books = getBooksByKeywords(keyword);
 		System.out.println("Books size for entered keyword::"+books.size());
-		refinedBooks(books,0);
-		keywords.add(0,keyword);
-		responseObject.setKeywords(keywords);
-        responseObject.setBooksResult(finalBookList);
+		books = refinedBooks(books,requestObject.getBooksResult(),0);
+		requestObject.getKeywords().add(0,keyword);
+		responseObject.setKeywords(requestObject.getKeywords());
+        responseObject.setBooksResult(books);
         responseObject.setSuccess("success");	                
         System.out.println("AJAX call successful");
         return responseObject;
 	}
 	
 	@RequestMapping(value="deleteBooks", method = RequestMethod.POST)
-	public @ResponseBody ResponseDataInJson deleteBooks(@RequestParam("keyword")String keyword){	
+	public @ResponseBody ResponseDataInJson deleteBooks(@RequestBody String str){	
+		ObjectMapper objectMapper = new ObjectMapper();
+		JsonNode node;
+		ResponseDataInJson requestObject = new ResponseDataInJson();
+		String keyword = "";
+		try {
+			node = objectMapper.readTree(str);
+			requestObject = objectMapper.convertValue(node.get("dataFromClient"), ResponseDataInJson.class);
+			keyword = objectMapper.convertValue(node.get("keyword"), String.class);
+		} catch (JsonProcessingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		System.out.println("Delete Keyword::"+keyword);
 		ArrayList<BookInfo> deleteList = new ArrayList<BookInfo>();
-		for(BookInfo book : finalBookList){
+		ArrayList<BookInfo> originalList = requestObject.getBooksResult();
+		ArrayList<String> originalKeywords = requestObject.getKeywords();
+		for(BookInfo book : originalList){
 			if(book.getAssociatedKeywords().contains(keyword)){
 				deleteList.add(book);
 			}
 		}
 		for(BookInfo book : deleteList){
-			finalBookList.remove(book);
+			originalList.remove(book);
 		}
 		
-		System.out.println("Books size for after delete::"+finalBookList.size());
-		keywords.remove(keyword);
-		responseObject.setKeywords(keywords);
-        responseObject.setBooksResult(finalBookList);
+		System.out.println("Books size for after delete::"+originalList.size());
+		originalKeywords.remove(keyword);
+		responseObject.setKeywords(originalKeywords);
+        responseObject.setBooksResult(originalList);
         responseObject.setSuccess("success");	                
         System.out.println("AJAX call for delete successful");
         return responseObject;
@@ -171,7 +210,7 @@ public class HomeController implements ServletContextAware{
 			                	ArrayList<BookInfo> perKeyBooks = getBooksByKeywords(normalizedKeyword);
 			                	if(perKeyBooks.size() > 0){
 			                		keywords.add(normalizedKeyword);
-			                		refinedBooks(perKeyBooks,1);
+			                		refinedBooks(perKeyBooks,finalBookList,1);
 			                	}			                	
 		                	}else{
 		                		break;
@@ -359,7 +398,7 @@ public class HomeController implements ServletContextAware{
 		return books;
 	}
 	
-	public void refinedBooks(ArrayList<BookInfo> books, int flag){
+	public ArrayList<BookInfo> refinedBooks(ArrayList<BookInfo> books, ArrayList<BookInfo> finalBookList, int flag){
 		for(int i=0;i<books.size();i++){
 			int count = 0;
 			System.out.println("List Size:::"+finalBookList.size());
@@ -385,6 +424,7 @@ public class HomeController implements ServletContextAware{
 				break;
 			}
 		}
+		return finalBookList;
 	}
 	
 	public void getBooksByKeywords(String searchString, int keywordsLength){
