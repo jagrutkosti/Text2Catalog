@@ -47,6 +47,7 @@ import org.json.XML;
 
 import com.alchemyapi.api.AlchemyAPI;
 import com.alchemyapi.api.AlchemyAPI_KeywordParams;
+import com.google.gson.Gson;
 
 /**
  * Handles requests for the application home page.
@@ -74,46 +75,46 @@ public class HomeController implements ServletContextAware{
 	}
 	
 	@RequestMapping(value="getKeywordBooks", method = RequestMethod.POST)
-	public @ResponseBody AjaxClass getKeywordBooks(@RequestParam("keyword")String keyword){		
+	public @ResponseBody ResponseDataInJson getKeywordBooks(@RequestParam("keyword")String keyword){		
 		
 		System.out.println("Keyword::"+keyword);
 		ArrayList<BookInfo> books = getBooksByKeywords(keyword);
 		System.out.println("Books size for entered keyword::"+books.size());
-		for(int i=0;i<books.size();i++){
-			int count = 0;
-			System.out.println("List Size:::"+finalBookList.size());
-			if(finalBookList.size() > 0 && books.get(i).getOpenLibId() != null && books.get(i).getOpenLibId().length() > 0){
-				for(BookInfo b : finalBookList){
-					if(b.getOpenLibId() == null || b.getOpenLibId().length() < 1){
-						continue;
-					}
-					else if(b.getOpenLibId() == books.get(i).getOpenLibId()){
-						String keywords = b.getAssociatedKeywords();
-						keywords = keywords + ", " + books.get(i).getAssociatedKeywords();
-						count++;						
-					}
-				}
-			}
-			if(count == 0){
-				finalBookList.add(0,books.get(i));
-			}
-			if(i > 5){
-				break;
-			}
-		}
+		refinedBooks(books,0);
 		keywords.add(0,keyword);
 		responseObject.setKeywords(keywords);
         responseObject.setBooksResult(finalBookList);
         responseObject.setSuccess("success");	                
         System.out.println("AJAX call successful");
-        AjaxClass dataFromServer = new AjaxClass();
-        dataFromServer.setDataFromServer(responseObject);
-        return dataFromServer;
+        return responseObject;
 	}
+	
+	@RequestMapping(value="deleteBooks", method = RequestMethod.POST)
+	public @ResponseBody ResponseDataInJson deleteBooks(@RequestParam("keyword")String keyword){	
+		System.out.println("Delete Keyword::"+keyword);
+		ArrayList<BookInfo> deleteList = new ArrayList<BookInfo>();
+		for(BookInfo book : finalBookList){
+			if(book.getAssociatedKeywords().contains(keyword)){
+				deleteList.add(book);
+			}
+		}
+		for(BookInfo book : deleteList){
+			finalBookList.remove(book);
+		}
+		
+		System.out.println("Books size for after delete::"+finalBookList.size());
+		keywords.remove(keyword);
+		responseObject.setKeywords(keywords);
+        responseObject.setBooksResult(finalBookList);
+        responseObject.setSuccess("success");	                
+        System.out.println("AJAX call for delete successful");
+        return responseObject;
+	} 
 	
 	@RequestMapping(value = "getBooks", method = RequestMethod.POST)
 	public @ResponseBody ModelAndView getBooks(Model model, @RequestParam("fileName")MultipartFile data){
 		 ModelAndView mav = new ModelAndView("results");
+		 Gson gson = new Gson();
 	     responseObject = new ResponseDataInJson();
 		 if (!data.isEmpty()) {
 	            try {
@@ -163,23 +164,28 @@ public class HomeController implements ServletContextAware{
 		                	if(finalBookList.size() < 50){
 		                		JSONObject tempObj = (JSONObject)keywordsArray.get(i);
 		                		String keyword = tempObj.getString("text");
-			                	System.out.println("Text: " + keyword);
+		                		String normalizedKeyword = keyword.replaceAll("[^\\w\\s]","");
+			                	System.out.println("Text: " + normalizedKeyword);
 			                	System.out.println("Relevance: " + tempObj.getDouble("relevance"));	    
 			                	//Get the books based on keywords
-			                	getBooksByKeywords(keyword, keywordsArray.length());
-			                	keywords.add(keyword);
+			                	ArrayList<BookInfo> perKeyBooks = getBooksByKeywords(normalizedKeyword);
+			                	if(perKeyBooks.size() > 0){
+			                		keywords.add(normalizedKeyword);
+			                		refinedBooks(perKeyBooks,1);
+			                	}			                	
 		                	}else{
 		                		break;
 		                	}
-		                }
-		                
+		                }		                
 		                System.out.println("Server File Location=" + serverFile.getAbsolutePath());
 		                System.out.println("Final Books List Size::::::::::::::" + finalBookList.size());
 		                responseObject.setKeywords(keywords);
 		                responseObject.setBooksResult(finalBookList);
 		                responseObject.setSuccess("success");	                
 		                System.out.println("You successfully uploaded file=" + data.getOriginalFilename());
-		                mav.addObject("dataFromServer",	responseObject);
+		                String resultJson = gson.toJson(responseObject);
+		                System.out.println(resultJson);
+		                mav.addObject("dataFromServer",	resultJson);
 		                return mav;
 	                } catch (JSONException je){
 	                	responseObject.setError("error");
@@ -351,6 +357,34 @@ public class HomeController implements ServletContextAware{
 			e.printStackTrace();
 		}
 		return books;
+	}
+	
+	public void refinedBooks(ArrayList<BookInfo> books, int flag){
+		for(int i=0;i<books.size();i++){
+			int count = 0;
+			System.out.println("List Size:::"+finalBookList.size());
+			if(finalBookList.size() > 0 && books.get(i).getOpenLibId() != null && books.get(i).getOpenLibId().length() > 0){
+				for(BookInfo b : finalBookList){
+					if(b.getOpenLibId() == null || b.getOpenLibId().length() < 1){
+						continue;
+					}
+					else if(b.getOpenLibId() == books.get(i).getOpenLibId()){
+						String keywords = b.getAssociatedKeywords();
+						keywords = keywords + ", " + books.get(i).getAssociatedKeywords();
+						count++;						
+					}
+				}
+			}
+			if(count == 0){
+				if(flag == 0)
+					finalBookList.add(0,books.get(i));
+				else
+					finalBookList.add(books.get(i));
+			}
+			if(i > 5){
+				break;
+			}
+		}
 	}
 	
 	public void getBooksByKeywords(String searchString, int keywordsLength){

@@ -15,146 +15,149 @@
 	crossorigin="anonymous">
 <link rel="stylesheet" href="resources/jquery.flipster.min.css">
 <link rel="stylesheet" href="resources/results.css">
-<link rel="stylesheet" href="http://css-spinners.com/css/spinner/whirly.css" type="text/css">
 <script type="text/javascript">
 	function filepath() {
 		$('#loading').show();
 		document.forms["imageOfBook"].submit();
 	};
-	
-	/* $('#scrollbox3').enscroll({
-	    showOnHover: true,
-	    verticalTrackClass: 'track3',
-	    verticalHandleClass: 'handle3'
-	}); */
-	
 </script>
 </head>
 <body>
-	
+
 	<!-- <div class="form-group"> -->
-		<div class="input-group">
-			<div class="input-group-addon">
-				<form id="imageOfBook" name="imageOfBook" action="getBooks" method="post"
-					enctype="multipart/form-data">
+	<div class="input-group">
+		<div class="input-group-addon">
+			<form id="imageOfBook" name="imageOfBook" action="getBooks"
+				method="post" enctype="multipart/form-data">
 				<label for="fileUpload"><img
-					src="resources/camera-black.png"> </label> 
-				<input type="file"
+					src="resources/camera-black.png"> </label> <input type="file"
 					onchange="filepath()" id="fileUpload" name="fileName"
 					accept="image/*" capture="camera">
-				</form>
-			</div>
-
-
-			<span class="input-group-addon" id="basic-addon1">#</span>
-			<div class="input-group-addon">
-				<form id="addKeyword" name="addKeyword" action="getKeywordBooks" method="post">
-					<input type="text" placeholder="Add Keywords..."
-						aria-describedby="basic-addon1" style="height: 50px;" name="keyword" id="keyword"> 
-					<!-- <span class="input-group-btn"> -->
-						<input type="submit" class="btn btn-primary" style="height: 50px;" value="Add" />
-					<!-- </span> -->
-				</form>
-			</div>
+			</form>
 		</div>
-	<!-- </div> -->
-	<div id="dataFromServer" style="display:none;">${dataFromServer}</div>
-	<div>
-		<div id="coverflow">
-			<ul class="flip-items">
-				<c:forEach items="${dataFromServer.booksResult}" var="book">					
-					<c:choose>
-						<c:when test="${book.coverId == 1}">
-							<li>
-								<div class="boxed">"<c:out value="${book.name}" />"<br>
-         						-<c:out value="${book.author}" /></div>
-         						<pre style="max-width:100px;word-wrap:break-word;">${book.associatedKeywords}</pre>         						
-         					</li>       
-						</c:when>
-						<c:otherwise>
-							<li>
-								&nbsp;&nbsp;<div class="boxed">
-									<img src="http://covers.openlibrary.org/b/id/${book.coverId}-M.jpg" style="width: auto; height: auto;max-width: 100px;max-height: 120px">
-								</div>
-								<pre style="max-width:100px;word-wrap:break-word;">${book.associatedKeywords}</pre>									
-							</li>													
-						</c:otherwise>
-					</c:choose>						
-         		</c:forEach>				
-			</ul>
+
+
+		<span class="input-group-addon" id="basic-addon1">#</span>
+		<div class="input-group-addon">
+			<form id="addKeyword" name="addKeyword" action="getKeywordBooks"
+				method="post">
+				<input type="text" placeholder="Add Keywords..."
+					aria-describedby="basic-addon1" style="height: 50px;"
+					name="keyword" id="keyword">
+				<!-- <span class="input-group-btn"> -->
+				<input type="submit" class="btn btn-primary" style="height: 50px;"
+					value="Add" />
+				<!-- </span> -->
+			</form>
 		</div>
-		
-		
-
-		<script>
-			$(document).ready(function() {
-				var dataFromServer = $('#dataFromServer').val();
-				console.log(dataFromServer.success);
-				setTimeout(function() {
-					var coverflow = $("#coverflow").flipster({
-						style: 'flat',
-						start : 0,
-						touch : true,
-						scrollwheel: true
-					});
-				}, 500);
-			});
-			
-			$("#addKeyword").submit(function(event){
-				event.preventDefault();
-				var $form = $(this), url = $form.attr('action');
-				$.ajax({
-					url: url,
-					data:{keyword:$('#keyword').val()},
-					type: "POST",
-					success: function(data){
-						console.log(data);
-						location.reload(true);
-					},
-					error: function(xhr,status,error){
-						console.log(xhr.responseText);
-					}
-				});
-				return false;
-			});
-		</script>
-
 	</div>
-	<center><div class="spinner" id="loading" style="display:none; position:relative;" ></div></center>
+	<!-- </div> -->
+	<div id="master">
+		<div id="coverflow">
+			<ul class="flip-items" id="flip-items"></ul>
+		</div>
+	</div>
+
+	<center><div class="spinner" id="loading" style="display: none; position: relative;"></div>	</center>
 	<hr>
 	<span class="label label-primary">#Keywords</span>
 	<div id="scrollbox3">
-		<select multiple data-role="tagsinput">
-			<c:forEach items="${dataFromServer.keywords}" var="keyword">
-				<option value="${keyword}"><c:out value="${keyword}" /></option>
-			</c:forEach>
-		</select>
+		<select id="tags" multiple data-role="tagsinput"></select>
 	</div>
-	<script>
-	$('select').on('itemRemoved', function(event) {
-		  // event.item: contains the item
-		  var array = "${dataFromServer.booksResult}";
-		  console.log(array.length);
-		  console.log(array);
-		  <c:forEach items="${dataFromServer.booksResult}" var="book">
-		  	var associatedKeywords = '${book.associatedKeywords}';
-		  	var b = '${book}';
-		  	if(associatedKeywords.indexOf(event.item)!== -1){
-				  var index = array.indexOf(b);
-				  array.splice(index,1);
-			  }
-		  </c:forEach>
-		  console.log(array.length);
-		});
-	</script>
+
 	<br>
-	
+
 	<hr>
 	<span class="label label-primary">Your Image</span>
 	<div class="imgborder">
-		<img src="data:image/jpg;base64,${dataFromServer.base64Img}"
-			style="width: 100%" class="img-rounded" />
+		<img id="img" src="" style="width: 100%" class="img-rounded" />
 	</div>
-
+	
+	<script>
+	function showAllData(dataFromServer){
+		$('#coverflow').remove();
+		$('#master').append($('<div id="coverflow"><ul class="flip-items" id="flip-items"></ul></div>'));
+		$('#tags').tagsinput('removeAll');
+		$.each(dataFromServer.booksResult, function(index, book){
+			var html = '';
+			if(book.coverId == 1){
+				html = '<li><div class="boxed">"'+book.name+'"<br>';
+				html += '-'+book.author+'</div>';
+				html += '<pre style="width:100px;height:40px;word-wrap:break-word;">'+book.associatedKeywords+'</pre></li>';
+				$('#flip-items').append($(html));
+			}else{
+				html = '<li><div class="boxed"><img src="http://covers.openlibrary.org/b/id/';
+				html += book.coverId+'-M.jpg" width="100" height="120"></div>';
+				html += '<pre style="width:100px;height:40px;word-wrap:break-word;">'+book.associatedKeywords+'</pre></li>';
+				$('#flip-items').append($(html));
+			}
+		});
+		
+		document.getElementById('img').setAttribute('src','data:image/jpg;base64,'+dataFromServer.base64Img);
+		
+		
+		$.each(dataFromServer.keywords, function(index, keyword){			
+			$('#tags').tagsinput('add',keyword);
+		});
+	}
+	
+	$(document).ready(function() {
+		var dataFromServer = ${dataFromServer};
+		console.log(dataFromServer);
+		showAllData(dataFromServer)
+		$("#coverflow").flipster({
+			style: 'flat',
+			start : 0,
+			touch : true,
+			scrollwheel: true
+		});
+	});
+	
+	$("#addKeyword").submit(function(event){
+		event.preventDefault();
+		var $form = $(this), url = $form.attr('action');
+		$.ajax({
+			url: url,
+			data:{keyword:$('#keyword').val()},
+			type: "POST",
+			success: function(data){
+				console.log(data);
+				$('#keyword').val('');
+				showAllData(data);
+				$("#coverflow").flipster({
+					style: 'flat',
+					start : 0,
+					touch : true,
+					scrollwheel: true
+				});
+			},
+			error: function(xhr,status,error){
+				console.log(xhr.responseText);
+			}
+		});
+		return false;
+	});
+	
+	$('select').on('itemRemoved', function(event) {
+		$.ajax({
+			url: 'deleteBooks',
+			data:{keyword:event.item},
+			type: "POST",
+			success: function(data){
+				console.log(data);				
+				showAllData(data);
+				$("#coverflow").flipster({
+					style: 'flat',
+					start : 0,
+					touch : true,
+					scrollwheel: true
+				});
+			},
+			error: function(xhr,status,error){
+				console.log(xhr.responseText);
+			}
+		});
+	});
+	</script>
 </body>
 </html>
