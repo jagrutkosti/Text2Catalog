@@ -25,9 +25,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.context.ServletContextAware;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
@@ -54,6 +57,8 @@ public class HomeController implements ServletContextAware{
 	private static final Logger logger = LoggerFactory.getLogger(HomeController.class);
 	private ServletContext servletContext;
 	ArrayList<BookInfo> finalBookList;
+	ResponseDataInJson responseObject;
+	ArrayList<String> keywords;
 	
 	/**
 	 * Simply selects the home view to render by returning its name.
@@ -68,10 +73,48 @@ public class HomeController implements ServletContextAware{
 		return "home";
 	}
 	
-	@RequestMapping(value = "getBooks", method = RequestMethod.POST)
-	public ModelAndView getBooks(Model model, @RequestParam("fileName")MultipartFile data){
+	@RequestMapping(value="getKeywordBooks", method = RequestMethod.POST)
+	public @ResponseBody AjaxClass getKeywordBooks(@RequestParam("keyword")String keyword){		
 		
-	     ResponseDataInJson responseObject = new ResponseDataInJson();
+		System.out.println("Keyword::"+keyword);
+		ArrayList<BookInfo> books = getBooksByKeywords(keyword);
+		System.out.println("Books size for entered keyword::"+books.size());
+		for(int i=0;i<books.size();i++){
+			int count = 0;
+			System.out.println("List Size:::"+finalBookList.size());
+			if(finalBookList.size() > 0 && books.get(i).getOpenLibId() != null && books.get(i).getOpenLibId().length() > 0){
+				for(BookInfo b : finalBookList){
+					if(b.getOpenLibId() == null || b.getOpenLibId().length() < 1){
+						continue;
+					}
+					else if(b.getOpenLibId() == books.get(i).getOpenLibId()){
+						String keywords = b.getAssociatedKeywords();
+						keywords = keywords + ", " + books.get(i).getAssociatedKeywords();
+						count++;						
+					}
+				}
+			}
+			if(count == 0){
+				finalBookList.add(0,books.get(i));
+			}
+			if(i > 5){
+				break;
+			}
+		}
+		keywords.add(0,keyword);
+		responseObject.setKeywords(keywords);
+        responseObject.setBooksResult(finalBookList);
+        responseObject.setSuccess("success");	                
+        System.out.println("AJAX call successful");
+        AjaxClass dataFromServer = new AjaxClass();
+        dataFromServer.setDataFromServer(responseObject);
+        return dataFromServer;
+	}
+	
+	@RequestMapping(value = "getBooks", method = RequestMethod.POST)
+	public @ResponseBody ModelAndView getBooks(Model model, @RequestParam("fileName")MultipartFile data){
+		 ModelAndView mav = new ModelAndView("results");
+	     responseObject = new ResponseDataInJson();
 		 if (!data.isEmpty()) {
 	            try {
 	                byte[] bytes = data.getBytes();
@@ -115,7 +158,7 @@ public class HomeController implements ServletContextAware{
 		                keywordsAsJson = keywordsAsJson.getJSONObject("keywords");
 		                JSONArray keywordsArray = keywordsAsJson.getJSONArray("keyword");
 		                finalBookList = new ArrayList<BookInfo>();
-		                ArrayList<String> keywords = new ArrayList<String>();
+		                keywords = new ArrayList<String>();
 		                for(int i=0; i<keywordsArray.length(); i++){
 		                	if(finalBookList.size() < 50){
 		                		JSONObject tempObj = (JSONObject)keywordsArray.get(i);
@@ -135,22 +178,26 @@ public class HomeController implements ServletContextAware{
 		                responseObject.setKeywords(keywords);
 		                responseObject.setBooksResult(finalBookList);
 		                responseObject.setSuccess("success");	                
-		                System.out.println("You successfully uploaded file=" + data.getOriginalFilename()); 
-		                return new ModelAndView("results","dataFromServer",responseObject);
+		                System.out.println("You successfully uploaded file=" + data.getOriginalFilename());
+		                mav.addObject("dataFromServer",	responseObject);
+		                return mav;
 	                } catch (JSONException je){
 	                	responseObject.setError("error");
-	                	return new ModelAndView("results","dataFromServer",responseObject);
+	                	mav.addObject("dataFromServer",	responseObject);
+		                return mav;
 	                }
 	            } catch (IOException e) {
 	                System.out.println("You failed to upload " + data.getOriginalFilename() + " => " + e.getMessage());
 	                responseObject.setError("error");
-	                return new ModelAndView("results","dataFromServer",responseObject);
+	                mav.addObject("dataFromServer",	responseObject);
+	                return mav;
 	            }
 	        } else {
 	            System.out.println("You failed to upload " + data.getName()
                 + " because the file was empty.");
 	            responseObject.setError("error");
-	            return new ModelAndView("results", "dataFromServer",responseObject);
+	            mav.addObject("dataFromServer",	responseObject);
+                return mav;
 	        }
 	}
 
@@ -223,6 +270,87 @@ public class HomeController implements ServletContextAware{
 			ex.printStackTrace();
 			return null;
 		}
+	}
+	
+	public ArrayList<BookInfo> getBooksByKeywords(String searchString){
+		ArrayList<BookInfo> books = new ArrayList<BookInfo>();
+		String url = "https://openlibrary.org/search.json?title=";
+		url = url + URLEncoder.encode(searchString) + "&page=1";
+		try {
+			URL urlObj = new URL(url);
+			HttpURLConnection con = (HttpURLConnection) urlObj.openConnection();			
+			// optional default is GET
+			con.setRequestMethod("GET");
+
+			//add request header
+			con.setRequestProperty("User-Agent", "Mozilla/5.0");
+
+			int responseCode = con.getResponseCode();
+			System.out.println("Response Code : " + responseCode);
+
+			BufferedReader in = new BufferedReader(
+			        new InputStreamReader(con.getInputStream()));
+			String inputLine;
+			StringBuffer response = new StringBuffer();
+
+			while ((inputLine = in.readLine()) != null) {
+				response.append(inputLine);
+			}
+			in.close();
+			
+			//convert into JSONObject
+			JSONObject resultJson = new JSONObject(response.toString());
+			System.out.println("Books received in JSON format:::" + resultJson);
+			
+			//Structuring books result with keywords			
+			JSONArray booksArray = null;
+			try{
+				booksArray = resultJson.getJSONArray("docs");
+			} catch(JSONException e){
+				e.printStackTrace();
+			}
+			for(int i=0; i<booksArray.length();i++){
+				BookInfo singleBookInfo = new BookInfo();
+				try{
+					JSONObject singleBookInfoJson = (JSONObject)booksArray.get(i);
+					singleBookInfo.setName(singleBookInfoJson.getString("title"));					
+					String key = singleBookInfoJson.getString("key");
+					key = key.substring(key.indexOf('O'));
+					singleBookInfo.setOpenLibId(key);
+					try{
+						singleBookInfo.setCoverId(singleBookInfoJson.getInt("cover_i"));
+					}catch(JSONException e){
+						JSONArray authorNames = singleBookInfoJson.getJSONArray("author_name");
+						String author = "";
+						for(int j=0; j<authorNames.length();j++){
+							author = author + authorNames.getString(j);
+						}
+						singleBookInfo.setAuthor(author);
+					}					
+					JSONArray authorNames = singleBookInfoJson.getJSONArray("author_name");
+					String author = "";
+					for(int j=0; j<authorNames.length();j++){
+						author = author + authorNames.getString(j);
+					}
+					singleBookInfo.setAuthor(author);
+				}catch(JSONException e){
+					e.printStackTrace();
+				}
+				singleBookInfo.setAssociatedKeywords(searchString);	
+				books.add(singleBookInfo);
+			}			
+			
+		} catch (MalformedURLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ProtocolException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return books;
 	}
 	
 	public void getBooksByKeywords(String searchString, int keywordsLength){

@@ -20,18 +20,19 @@
 	function filepath() {
 		$('#loading').show();
 		document.forms["imageOfBook"].submit();
-	}
+	};
 	
-	$('#scrollbox3').enscroll({
+	/* $('#scrollbox3').enscroll({
 	    showOnHover: true,
 	    verticalTrackClass: 'track3',
 	    verticalHandleClass: 'handle3'
-	});
+	}); */
+	
 </script>
 </head>
 <body>
 	
-	<div class="form-group">
+	<!-- <div class="form-group"> -->
 		<div class="input-group">
 			<div class="input-group-addon">
 				<form id="imageOfBook" name="imageOfBook" action="getBooks" method="post"
@@ -46,15 +47,18 @@
 
 
 			<span class="input-group-addon" id="basic-addon1">#</span>
-			<input type="text" class="form-control" placeholder="Add Keywords..."
-				aria-describedby="basic-addon1" style="height: 50px;"> 
-			<span class="input-group-btn">
-				<button type="button" class="btn btn-primary" style="height: 50px;">Add</button>
-			</span>
-
+			<div class="input-group-addon">
+				<form id="addKeyword" name="addKeyword" action="getKeywordBooks" method="post">
+					<input type="text" placeholder="Add Keywords..."
+						aria-describedby="basic-addon1" style="height: 50px;" name="keyword" id="keyword"> 
+					<!-- <span class="input-group-btn"> -->
+						<input type="submit" class="btn btn-primary" style="height: 50px;" value="Add" />
+					<!-- </span> -->
+				</form>
+			</div>
 		</div>
-	</div>
-	
+	<!-- </div> -->
+	<div id="dataFromServer" style="display:none;">${dataFromServer}</div>
 	<div>
 		<div id="coverflow">
 			<ul class="flip-items">
@@ -84,6 +88,8 @@
 
 		<script>
 			$(document).ready(function() {
+				var dataFromServer = $('#dataFromServer').val();
+				console.log(dataFromServer.success);
 				setTimeout(function() {
 					var coverflow = $("#coverflow").flipster({
 						style: 'flat',
@@ -93,9 +99,30 @@
 					});
 				}, 500);
 			});
+			
+			$("#addKeyword").submit(function(event){
+				event.preventDefault();
+				var $form = $(this), url = $form.attr('action');
+				$.ajax({
+					url: url,
+					data:{keyword:$('#keyword').val()},
+					type: "POST",
+					success: function(data){
+						console.log(data);
+						location.reload(true);
+					},
+					error: function(xhr,status,error){
+						console.log(xhr.responseText);
+					}
+				});
+				return false;
+			});
 		</script>
 
 	</div>
+	<center><div class="spinner" id="loading" style="display:none; position:relative;" ></div></center>
+	<hr>
+	<span class="label label-primary">#Keywords</span>
 	<div id="scrollbox3">
 		<select multiple data-role="tagsinput">
 			<c:forEach items="${dataFromServer.keywords}" var="keyword">
@@ -103,8 +130,27 @@
 			</c:forEach>
 		</select>
 	</div>
+	<script>
+	$('select').on('itemRemoved', function(event) {
+		  // event.item: contains the item
+		  var array = "${dataFromServer.booksResult}";
+		  console.log(array.length);
+		  console.log(array);
+		  <c:forEach items="${dataFromServer.booksResult}" var="book">
+		  	var associatedKeywords = '${book.associatedKeywords}';
+		  	var b = '${book}';
+		  	if(associatedKeywords.indexOf(event.item)!== -1){
+				  var index = array.indexOf(b);
+				  array.splice(index,1);
+			  }
+		  </c:forEach>
+		  console.log(array.length);
+		});
+	</script>
 	<br>
-	<center><div class="whirly-loader" id="loading" style="display:none; position:relative;" >Loading...</div></center>
+	
+	<hr>
+	<span class="label label-primary">Your Image</span>
 	<div class="imgborder">
 		<img src="data:image/jpg;base64,${dataFromServer.base64Img}"
 			style="width: 100%" class="img-rounded" />

@@ -8,21 +8,8 @@
 <script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" 
 integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
-<link rel="stylesheet" href="http://css-spinners.com/css/spinner/whirly.css" type="text/css">
-<style>
-#fileUpload {
-    display: none;
-}
+<link rel="stylesheet" href="resources/home.css" type="text/css">
 
-body {
-  text-align: center;
-}
- 
-.button {
-	position: absolute;
-	top: 50%;
-}
-</style>
 <script type="text/javascript">
 function filepath(){
 	$('#loading').show();
@@ -42,7 +29,7 @@ function filepath(){
 			
 		</form>
 		<br><br>
-		<div class="whirly-loader" id="loading" style="display:none;">Loading...</div>
+		<center><div class="spinner" id="loading" style="display:none;"></div></center>
 		<blockquote>
   			<p class="text-center"><strong>Step 1:</strong> Click Photo!</p>
 		</blockquote>

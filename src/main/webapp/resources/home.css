@@ -1,61 +1,14 @@
 #fileUpload {
-	display: none;
+    display: none;
 }
 
+body {
+  text-align: center;
+}
+ 
 .button {
 	position: absolute;
 	top: 50%;
-}
-
-.imgborder {
-	width: 100%;
-	border-radius: 10px;
-}
-
-.boxed {
-	border: 1px solid gray;
-	background-color: white;
-	width: 100px;
-	height: 120px;
-	word-wrap:break-word;
-	color: black;
-	size: 9px;
-}
-
-/* For scrollbar code */
-#scrollbox3 {
-    overflow: auto;
-    height: 100px;   
-}
-
-.track3 {
-    width: 5px;
-    background: rgba(0, 0, 0, 0);
-    margin-right: 2px;
-    border-radius: 10px;
-    -webkit-transition: background 250ms linear;
-    transition: background 250ms linear;
-}
-
-.track3:hover,
-.track3.dragging {
-    background: #d9d9d9; /* Browsers without rgba support */
-    background: rgba(0, 0, 0, 0.15);
-}
-
-.handle3 {
-    width: 3px;
-    right: 0;
-    background: #999;
-    background: rgba(0, 0, 0, 0.4);
-    border-radius: 3px;
-    -webkit-transition: width 250ms;
-    transition: width 250ms;
-}
-
-.track3:hover .handle3,
-.track3.dragging .handle3 {
-    width: 5px;
 }
 
 .spinner {
