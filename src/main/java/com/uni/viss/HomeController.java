@@ -133,7 +133,7 @@ public class HomeController implements ServletContextAware{
 		ArrayList<BookInfo> originalList = requestObject.getBooksResult();
 		ArrayList<String> originalKeywords = requestObject.getKeywords();
 		for(BookInfo book : originalList){
-			if(book.getAssociatedKeywords().contains(keyword)){
+			if(book.getAssociatedKeywords().toLowerCase().contains(keyword.toLowerCase())){
 				deleteList.add(book);
 			}
 		}

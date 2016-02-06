@@ -116,33 +116,44 @@
 	
 	$("#addKeyword").submit(function(event){
 		event.preventDefault();
+		$('#loading').show();
 		var $form = $(this), url = $form.attr('action');
-		$.ajax({
-			url: url,
-			contentType : 'application/json; charset=utf-8',
-		    dataType : 'json',
-			data: JSON.stringify({keyword:$('#keyword').val(), dataFromClient : dataFromServer}),
-			type: "POST",
-			success: function(data){
-				console.log(data);
-				dataFromServer = data;
-				$('#keyword').val('');
-				showAllData(dataFromServer);
-				$("#coverflow").flipster({
-					style: 'flat',
-					start : 0,
-					touch : true,
-					scrollwheel: true
-				});
-			},
-			error: function(xhr,status,error){
-				console.log(xhr.responseText);
-			}
-		});
+		var newKeyword = $('#keyword').val().toLowerCase();
+		var tmp = dataFromServer.keywords.join('~').toLowerCase();
+		var lcArray = tmp.split('~')
+		if(lcArray.indexOf(newKeyword) > -1){
+			alert('Keyword already exists!');
+			$('#keyword').val('');
+		}else{
+			$.ajax({
+				url: url,
+				contentType : 'application/json; charset=utf-8',
+			    dataType : 'json',
+				data: JSON.stringify({keyword:newKeyword, dataFromClient : dataFromServer}),
+				type: "POST",
+				success: function(data){
+					console.log(data);
+					dataFromServer = data;
+					$('#keyword').val('');
+					showAllData(dataFromServer);
+					$("#coverflow").flipster({
+						style: 'flat',
+						start : 0,
+						touch : true,
+						scrollwheel: true
+					});
+					$('#loading').hide();
+				},
+				error: function(xhr,status,error){
+					console.log(xhr.responseText);
+				}
+			});
+		}		
 		return false;
 	});
 	
 	$('select').on('itemRemoved', function(event) {
+		$('#loading').show();
 		$.ajax({
 			url: 'deleteBooks',
 			contentType : 'application/json; charset=utf-8',
@@ -159,6 +170,7 @@
 					touch : true,
 					scrollwheel: true
 				});
+				$('#loading').hide();
 			},
 			error: function(xhr,status,error){
 				console.log(xhr.responseText);
