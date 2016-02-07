@@ -410,6 +410,7 @@ public class HomeController implements ServletContextAware{
 					else if(b.getOpenLibId() == books.get(i).getOpenLibId()){
 						String keywords = b.getAssociatedKeywords();
 						keywords = keywords + ", " + books.get(i).getAssociatedKeywords();
+						b.setAssociatedKeywords(keywords);
 						count++;						
 					}
 				}

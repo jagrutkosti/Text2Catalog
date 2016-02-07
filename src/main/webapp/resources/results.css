@@ -85,3 +85,78 @@
     -webkit-transform: perspective(120px) rotateX(-180deg) rotateY(-179.9deg);
   }
 }
+
+
+.tagarea { 
+	display: none;
+	overflow: auto;
+    height: 100px;
+}
+
+.tag-box {
+  list-style: none;
+  padding: 3px;
+  margin: 0;
+  display: inline-block;
+  font-family: arial;
+  width: 100%;
+  border: 1px solid #F44336;
+  border-radius: 4px;
+  max-height: 120px;
+  overflow: scroll;
+  overflow-x: hidden;
+}
+
+.tag-box * {
+  -webkit-transition-property: all;
+  transition-property: all;
+  -webkit-transition-duration: 0.3s;
+  transition-duration: 0.3s;
+}
+
+.tag-box li {
+  padding: 4px 6px;
+  float: left;
+  display: inline-block;
+}
+
+.tag-box li.tags {
+  background: #2196F3;
+  color: #fff;
+  border-radius: 4px;
+  margin: 4px 3px;
+  position: relative;
+  padding-right: 18px;
+}
+
+.tag-box li.tags .close {
+  display: inline-block;
+  position: absolute;
+  color: #ffffff;
+  width: 14px;
+  height: 18px;
+  padding-left: 3px;
+}
+
+.tag-box li.tags.edit .input-tag { height: auto; }
+
+.tag-box li.tags.danger {
+  background: #F00;
+  opacity: 0.8;
+}
+
+.tag-box li .input-tag {
+  color: #fff;
+  height: 24px;
+  vertical-align: middle;
+  border: none;
+  outline: none;
+  background: none;
+}
+
+.tag-box li .input-tag:hover,
+.tag-box li .input-tag:focus {
+  outline: none;
+  border: none;
+}
+

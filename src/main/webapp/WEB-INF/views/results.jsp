@@ -5,14 +5,12 @@
 <head>
 <title>Results</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
+<script type="text/javascript" src="resources/jquery-1.12.0.min.js"></script>
 <script type="text/javascript" src="resources/jquery.flipster.min.js"></script>
-<script type="text/javascript" src="resources/bootstrap-tagsinput.js"></script>
-<link rel="stylesheet" href="resources/bootstrap-tagsinput.css">
-<link rel="stylesheet"
-	href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css"
-	integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7"
-	crossorigin="anonymous">
+<script type="text/javascript" src="resources/jquery-ui.min.js"></script>
+<script type="text/javascript" src="resources/jquery.ui.touch-punch.min.js"></script>
+<link rel="stylesheet" href="resources/jquery-ui.min.css">
+<link rel="stylesheet" href="resources/bootstrap.min.css">
 <link rel="stylesheet" href="resources/jquery.flipster.min.css">
 <link rel="stylesheet" href="resources/results.css">
 <script type="text/javascript">
@@ -60,123 +58,23 @@
 
 	<center><div class="spinner" id="loading" style="display: none; position: relative;"></div>	</center>
 	<hr>
+	
 	<span class="label label-primary">#Keywords</span>
-	<div id="scrollbox3">
-		<select id="tags" multiple data-role="tagsinput"></select>
-	</div>
-
+	<!-- <div id="scrollbox3"> -->
+		<textarea class="tagarea" id="tagsarea"></textarea>
+	<!-- </div> -->
 	<br>
-
 	<hr>
+	
 	<span class="label label-primary">Your Image</span>
 	<div class="imgborder">
 		<img id="img" src="" style="width: 100%" class="img-rounded" />
 	</div>
 	
+	
 	<script>
-	var dataFromServer;
-	function showAllData(dataFromServer){
-		$('#coverflow').remove();
-		$('#master').append($('<div id="coverflow"><ul class="flip-items" id="flip-items"></ul></div>'));
-		$('#tags').tagsinput('removeAll');
-		$.each(dataFromServer.booksResult, function(index, book){
-			var html = '';
-			if(book.coverId == 1){
-				html = '<li><div class="boxed">"'+book.name+'"<br>';
-				html += '-'+book.author+'</div>';
-				html += '<pre style="width:100px;height:40px;word-wrap:break-word;">'+book.associatedKeywords+'</pre></li>';
-				$('#flip-items').append($(html));
-			}else{
-				html = '<li><div class="boxed"><img src="http://covers.openlibrary.org/b/id/';
-				html += book.coverId+'-M.jpg" width="100" height="120"></div>';
-				html += '<pre style="width:100px;height:40px;word-wrap:break-word;">'+book.associatedKeywords+'</pre></li>';
-				$('#flip-items').append($(html));
-			}
-		});
-		
-		document.getElementById('img').setAttribute('src','data:image/jpg;base64,'+dataFromServer.base64Img);
-		
-		
-		$.each(dataFromServer.keywords, function(index, keyword){			
-			$('#tags').tagsinput('add',keyword);
-		});
-	}
-	
-	$(document).ready(function() {
-		dataFromServer = ${dataFromServer};
-		console.log(dataFromServer);
-		showAllData(dataFromServer)
-		$("#coverflow").flipster({
-			style: 'flat',
-			start : 0,
-			touch : true,
-			scrollwheel: true
-		});
-	});
-	
-	$("#addKeyword").submit(function(event){
-		event.preventDefault();
-		$('#loading').show();
-		var $form = $(this), url = $form.attr('action');
-		var newKeyword = $('#keyword').val().toLowerCase();
-		var tmp = dataFromServer.keywords.join('~').toLowerCase();
-		var lcArray = tmp.split('~')
-		if(lcArray.indexOf(newKeyword) > -1){
-			alert('Keyword already exists!');
-			$('#keyword').val('');
-		}else{
-			$.ajax({
-				url: url,
-				contentType : 'application/json; charset=utf-8',
-			    dataType : 'json',
-				data: JSON.stringify({keyword:newKeyword, dataFromClient : dataFromServer}),
-				type: "POST",
-				success: function(data){
-					console.log(data);
-					dataFromServer = data;
-					$('#keyword').val('');
-					showAllData(dataFromServer);
-					$("#coverflow").flipster({
-						style: 'flat',
-						start : 0,
-						touch : true,
-						scrollwheel: true
-					});
-					$('#loading').hide();
-				},
-				error: function(xhr,status,error){
-					console.log(xhr.responseText);
-				}
-			});
-		}		
-		return false;
-	});
-	
-	$('select').on('itemRemoved', function(event) {
-		$('#loading').show();
-		$.ajax({
-			url: 'deleteBooks',
-			contentType : 'application/json; charset=utf-8',
-		    dataType : 'json',
-			data:JSON.stringify({keyword:event.item, dataFromClient : dataFromServer}),
-			type: "POST",
-			success: function(data){
-				console.log(data);	
-				dataFromServer = data;
-				showAllData(dataFromServer);
-				$("#coverflow").flipster({
-					style: 'flat',
-					start : 0,
-					touch : true,
-					scrollwheel: true
-				});
-				$('#loading').hide();
-			},
-			error: function(xhr,status,error){
-				console.log(xhr.responseText);
-			}
-		});
-	});
-	</script>
+		var dataFromServer = ${dataFromServer};
+	</script>	
+	<script type="text/javascript" src="resources/results.js"></script>
 </body>
 </html>
