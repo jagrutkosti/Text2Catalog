@@ -6,12 +6,11 @@
 <title>Results</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script type="text/javascript" src="resources/jquery-1.12.0.min.js"></script>
-<script type="text/javascript" src="resources/jquery.flipster.min.js"></script>
 <script type="text/javascript" src="resources/jquery-ui.min.js"></script>
 <script type="text/javascript" src="resources/jquery.ui.touch-punch.min.js"></script>
 <link rel="stylesheet" href="resources/jquery-ui.min.css">
 <link rel="stylesheet" href="resources/bootstrap.min.css">
-<link rel="stylesheet" href="resources/jquery.flipster.min.css">
+<link rel="stylesheet" href="resources/coverflow.css">
 <link rel="stylesheet" href="resources/results.css">
 <script type="text/javascript">
 	function filepath() {
@@ -50,11 +49,11 @@
 		</div>
 	</div>
 	<!-- </div> -->
-	<div id="master">
-		<div id="coverflow">
-			<ul class="flip-items" id="flip-items"></ul>
+	<!-- <div id="master"> -->
+		<div id="container">
+			<!-- <ul class="flip-items" id="flip-items"></ul> -->
 		</div>
-	</div>
+	<!-- </div> -->
 
 	<center><div class="spinner" id="loading" style="display: none; position: relative;"></div>	</center>
 	<hr>
@@ -74,7 +73,8 @@
 	
 	<script>
 		var dataFromServer = ${dataFromServer};
-	</script>	
+	</script>
+	<script type="text/javascript" src="resources/coverflow.js"></script>	
 	<script type="text/javascript" src="resources/results.js"></script>
 </body>
 </html>

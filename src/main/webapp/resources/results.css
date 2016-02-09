@@ -90,7 +90,6 @@
 .tagarea { 
 	display: none;
 	overflow: auto;
-    height: 100px;
 }
 
 .tag-box {
@@ -102,7 +101,6 @@
   width: 100%;
   border: 1px solid #F44336;
   border-radius: 4px;
-  max-height: 120px;
   overflow: scroll;
   overflow-x: hidden;
 }

@@ -1,6 +1,19 @@
+var playlist = [];
 function showAllData(dataFromServer){
-	$('#coverflow').remove();
-	$('#master').append($('<div id="coverflow"><ul class="flip-items" id="flip-items"></ul></div>'));
+	coverflow('container').remove();
+	coverflow('container').setup({
+		playlist : playlist,
+		coverwidth: 100,
+		coverheight: 120,
+		fixedsize: true,
+		width : $(window).width(),
+		reflectionopacity : 0,
+		reflectionratio : 0
+	});
+	
+	/*//$('#coverflow').find("*").addBack().off();
+	$('#flip-items').empty();
+	//$('#master').after($('<div id="coverflow"><ul class="flip-items" id="flip-items"></ul></div>'));
 	
 	$.each(dataFromServer.booksResult, function(index, book){
 		var html = '';
@@ -15,10 +28,11 @@ function showAllData(dataFromServer){
 			html += '<pre style="width:100px;height:40px;word-wrap:break-word;">'+book.associatedKeywords+'</pre></li>';
 			$('#flip-items').append($(html));
 		}
-	});
+	});*/
 	
 	document.getElementById('img').setAttribute('src','data:image/jpg;base64,'+dataFromServer.base64Img);
 	
+	$('.tag-box').find("*").addBack().off();
 	$('.tag-box').remove();
 	$('#tagsarea').val('');
 	$.each(dataFromServer.keywords, function(index, keyword){
@@ -27,7 +41,6 @@ function showAllData(dataFromServer){
 	var str = $('#tagsarea').val();
 	str = str.slice(0,-1);
 	$('#tagsarea').val(str);
-	console.log($('#tagsarea').val());
 	
 	var backSpace;
 	var close = '<a class="close">x</a>'; 
@@ -39,13 +52,14 @@ function showAllData(dataFromServer){
 	  $('.tag-box').append('<li class="tags">'+PreTags[i]+close+'</li>');
 	}
 	
+	
 	//Delete tag
 	$(".tag-box").on("click", ".close", function()  {
 		var tempstr = $(this).parent().text();
 		tempstr = tempstr.slice(0,-1);
 		$(this).parent().remove();
-		setTimeout(removeTag(tempstr),1);
-	});	
+		removeTag(tempstr);
+	});
 	
 	//Sorting
 	$(function() {
@@ -56,12 +70,10 @@ function showAllData(dataFromServer){
 			scrollSpeed: 200,
 			stop : function(event,ui){
 				stop = ui.item.index();
-				console.log(stop);
 				reorderArray(start,stop);
 			},
 			start : function(event,ui){
 				start = ui.item.index();
-				console.log(start);
 			}
 		});	
 		$( ".tag-box" ).disableSelection();
@@ -69,56 +81,58 @@ function showAllData(dataFromServer){
 };
 
 $(document).ready(function() {
-	console.log(dataFromServer);
+	constructJson(dataFromServer);
 	showAllData(dataFromServer);
-	$("#coverflow").flipster({	
+	/*cover = $("#coverflow").flipster({	
 		style: 'flat',
 		start : 0,
 		touch : true,
 		scrollwheel: true		
-	});		
+	});	*/	
 });
 
-
-$(document).on('submit','#addKeyword', function(event){
-	event.preventDefault();
-	$('#loading').show();		
-	var $form = $(this), url = $form.attr('action');
-	var newKeyword = $('#keyword').val().toLowerCase();
-	var tmp = dataFromServer.keywords.join('~').toLowerCase();
-	var lcArray = tmp.split('~')
-	if(lcArray.indexOf(newKeyword) > -1){
-		alert('Keyword already exists!');
-		$('#keyword').val('');
-		$('#loading').hide();
-	}else{
-		$.ajax({
-			url: url,
-			contentType : 'application/json; charset=utf-8',
-		    dataType : 'json',
-		    async : true,
-		    cache : false,
-			data: JSON.stringify({keyword:newKeyword, dataFromClient : dataFromServer}),
-			type: "POST",
-			success: function(data){
-				console.log(data);
-				dataFromServer = data;
-				$('#keyword').val('');
-				showAllData(dataFromServer);
-				$("#coverflow").flipster({	
-					style: 'flat',
-					start : 0,
-					touch : true,
-					scrollwheel: true		
-				});		
-				$('#loading').hide();
-			},
-			error: function(xhr,status,error){
-				console.log(xhr.responseText);
-			}
-		});
-	}		
-	return false;
+$(function(){
+	$(document).on('submit','#addKeyword', function(event){
+		event.preventDefault();
+		$('#loading').show();		
+		var $form = $(this), url = $form.attr('action');
+		var newKeyword = $('#keyword').val().toLowerCase();
+		var tmp = dataFromServer.keywords.join('~').toLowerCase();
+		var lcArray = tmp.split('~')
+		if(lcArray.indexOf(newKeyword) > -1){
+			alert('Keyword already exists!');
+			$('#keyword').val('');
+			$('#loading').hide();
+		}else{
+			$.ajax({
+				url: url,
+				contentType : 'application/json; charset=utf-8',
+			    dataType : 'json',
+			    async : true,
+			    cache : false,
+				data: JSON.stringify({keyword:newKeyword, dataFromClient : dataFromServer}),
+				type: "POST",
+				success: function(data){
+					dataFromServer = data;
+					constructJson(dataFromServer);
+					$('#keyword').val('');
+					showAllData(dataFromServer);
+					/*cover.flipster('index');
+					$("#coverflow").flipster({	
+						style: 'flat',
+						start : 0,
+						touch : true,
+						scrollwheel: true		
+					});*/		
+					$('#loading').hide();
+				},
+				error: function(xhr,status,error){
+					console.log(xhr.responseText);
+				}
+			});
+		}		
+		return false;
+	});
 });
 
 /*$('#tags').on('itemRemoved', function(event) {*/
@@ -132,16 +146,17 @@ function removeTag(tag){
 	    cache : false,
 		data:JSON.stringify({keyword:tag, dataFromClient : dataFromServer}),
 		type: "POST",
-		success: function(data){
-			console.log(data);	
+		success: function(data){	
 			dataFromServer = data;
+			constructJson(dataFromServer);
 			showAllData(dataFromServer);
+			/*cover.flipster('index');
 			$("#coverflow").flipster({	
 				style: 'flat',
 				start : 0,
 				touch : true,
 				scrollwheel: true		
-			});		
+			});*/		
 			$('#loading').hide();
 		},
 		error: function(xhr,status,error){
@@ -153,7 +168,7 @@ function removeTag(tag){
 function reorderArray(start,stop){
 	var booksList = dataFromServer.booksResult;
 	var keywords = dataFromServer.keywords;
-	console.log(booksList.length);
+	
 	var draggedItem = booksList[start];
 	var draggedKeyword = keywords[start];
 	
@@ -191,12 +206,34 @@ function reorderArray(start,stop){
 	booksList.splice.apply(booksList,[index,0].concat(temp));
 	dataFromServer.booksResult = booksList;
 	
-	console.log(temp.length);
+	constructJson(dataFromServer);
 	showAllData(dataFromServer);
+	/*cover.flipster('index');
 	$("#coverflow").flipster({	
 		style: 'flat',
 		start : 0,
 		touch : true,
 		scrollwheel: true		
-	});	
+	});	*/
+}
+
+function constructJson(dataFromServer){
+	playlist = [];
+	$.each(dataFromServer.booksResult, function(index, book){
+		var object = {};
+		var bookname = book.name;
+		if(bookname.length > 100){
+			bookname = bookname.substr(0,100);
+			bookname += '...';
+		}
+		
+		object.title = "'"+ bookname + "'-By " + book.author;
+		object.description = "#"+book.associatedKeywords;
+		if(book.coverId !== 1){
+			object.image = "http://covers.openlibrary.org/b/id/" + book.coverId+ "-M.jpg";
+		}else{
+			object.image = "http://dummyimage.com/100x120/dbd8db/000000.png&text=No+Image";
+		}
+		playlist.push(object);
+	});
 }
