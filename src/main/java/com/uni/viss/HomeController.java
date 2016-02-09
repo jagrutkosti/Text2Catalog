@@ -141,6 +141,23 @@ public class HomeController implements ServletContextAware{
 			originalList.remove(book);
 		}
 		
+		//Remove keyword if not book is associated with it
+		ArrayList<String> deleteKey = new ArrayList<>();
+		for(String key : originalKeywords){
+			int c = 0;
+			for(BookInfo b : originalList){
+				if(b.getAssociatedKeywords().toLowerCase().contains(key.toLowerCase())){
+					c++;
+					break;
+				}
+			}
+			if(c == 0){
+				deleteKey.add(key);
+			}
+		}
+		for(String k : deleteKey){
+			originalKeywords.remove(k);
+		}
 		System.out.println("Books size for after delete::"+originalList.size());
 		originalKeywords.remove(keyword);
 		responseObject.setKeywords(originalKeywords);
@@ -407,7 +424,7 @@ public class HomeController implements ServletContextAware{
 					if(b.getOpenLibId() == null || b.getOpenLibId().length() < 1){
 						continue;
 					}
-					else if(b.getOpenLibId() == books.get(i).getOpenLibId()){
+					else if(b.getOpenLibId().equalsIgnoreCase(books.get(i).getOpenLibId())){
 						String keywords = b.getAssociatedKeywords();
 						keywords = keywords + ", " + books.get(i).getAssociatedKeywords();
 						b.setAssociatedKeywords(keywords);

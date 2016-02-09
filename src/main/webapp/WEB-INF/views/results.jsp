@@ -8,6 +8,7 @@
 <script type="text/javascript" src="resources/jquery-1.12.0.min.js"></script>
 <script type="text/javascript" src="resources/jquery-ui.min.js"></script>
 <script type="text/javascript" src="resources/jquery.ui.touch-punch.min.js"></script>
+<script type="text/javascript" src="resources/bootstrap.min.js"></script>
 <link rel="stylesheet" href="resources/jquery-ui.min.css">
 <link rel="stylesheet" href="resources/bootstrap.min.css">
 <link rel="stylesheet" href="resources/coverflow.css">
@@ -69,8 +70,29 @@
 	<div class="imgborder">
 		<img id="img" src="" style="width: 100%" class="img-rounded" />
 	</div>
-	
-	
+
+	<div id="modal-content" class="modal fade" tabindex="-1" role="dialog">
+	    <div class="modal-dialog">
+	        <div class="modal-content">
+	            <div class="modal-header">
+	                <button type="button" class="close" data-dismiss="modal">×</button>
+	                <p><b>Book Information</b></p>
+	            </div>
+	            <div class="modal-body">
+	            	<p>Some Book Information</p>
+	            	<p>And its location.</p>
+	                <p>
+	                    <label for="txtname">Email:</label><input type="text" id="txtname" />
+	                </p>
+	            </div>
+	            <div class="modal-footer"> 
+	                <a href="#" class="btn" data-dismiss="modal">Close</a>
+	                 <a href="#" class="btn btn-primary">Send Location</a>
+	            </div>
+	        </div>
+	    </div>
+	</div>
+
 	<script>
 		var dataFromServer = ${dataFromServer};
 	</script>

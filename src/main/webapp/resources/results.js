@@ -9,6 +9,10 @@ function showAllData(dataFromServer){
 		width : $(window).width(),
 		reflectionopacity : 0,
 		reflectionratio : 0
+	}).on('click', function(){
+		$('#modal-content').modal({
+	        show: true
+	    });
 	});
 	
 	/*//$('#coverflow').find("*").addBack().off();
