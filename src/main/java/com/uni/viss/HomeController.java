@@ -132,21 +132,35 @@ public class HomeController implements ServletContextAware{
 		ArrayList<BookInfo> deleteList = new ArrayList<BookInfo>();
 		ArrayList<BookInfo> originalList = requestObject.getBooksResult();
 		ArrayList<String> originalKeywords = requestObject.getKeywords();
+		
 		for(BookInfo book : originalList){
-			if(book.getAssociatedKeywords().toLowerCase().contains(keyword.toLowerCase())){
-				deleteList.add(book);
+			String[] kwrds = book.getAssociatedKeywords().split(",");
+			if(kwrds.length == 1){
+				if(book.getAssociatedKeywords().toLowerCase().equalsIgnoreCase(keyword.toLowerCase())){
+					deleteList.add(book);
+				}
+			}else if(kwrds.length > 1){
+				for(int i=0;i<kwrds.length;i++){
+					if(kwrds[i].toLowerCase().equalsIgnoreCase(keyword.toLowerCase())){
+						ArrayList<String> temp = new ArrayList<>(Arrays.asList(kwrds));
+						temp.remove(kwrds[i]);
+						book.setAssociatedKeywords(String.join(",", temp));
+						break;
+					}
+				}
 			}
+			
 		}
 		for(BookInfo book : deleteList){
 			originalList.remove(book);
 		}
 		
-		//Remove keyword if not book is associated with it
+		//Remove keyword if no book is associated with it
 		ArrayList<String> deleteKey = new ArrayList<>();
 		for(String key : originalKeywords){
 			int c = 0;
 			for(BookInfo b : originalList){
-				if(b.getAssociatedKeywords().toLowerCase().contains(key.toLowerCase())){
+				if(b.getAssociatedKeywords().toLowerCase().equalsIgnoreCase(key.toLowerCase())){
 					c++;
 					break;
 				}
@@ -426,7 +440,7 @@ public class HomeController implements ServletContextAware{
 					}
 					else if(b.getOpenLibId().equalsIgnoreCase(books.get(i).getOpenLibId())){
 						String keywords = b.getAssociatedKeywords();
-						keywords = keywords + ", " + books.get(i).getAssociatedKeywords();
+						keywords = keywords + "," + books.get(i).getAssociatedKeywords();
 						b.setAssociatedKeywords(keywords);
 						count++;						
 					}
@@ -519,7 +533,7 @@ public class HomeController implements ServletContextAware{
 						}
 						else if(b.getOpenLibId() == singleBookInfo.getOpenLibId()){
 							String keywords = b.getAssociatedKeywords();
-							keywords = keywords + ", " + singleBookInfo.getAssociatedKeywords();
+							keywords = keywords + "," + singleBookInfo.getAssociatedKeywords();
 							count++;
 							break;
 						}

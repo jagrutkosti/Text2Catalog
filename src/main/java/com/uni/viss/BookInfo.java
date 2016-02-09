@@ -1,5 +1,7 @@
 package com.uni.viss;
 
+import java.util.ArrayList;
+
 public class BookInfo {
 	private String name;
 	private String author;
