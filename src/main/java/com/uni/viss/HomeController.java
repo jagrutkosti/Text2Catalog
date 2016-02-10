@@ -61,25 +61,12 @@ import com.google.gson.Gson;
 @Controller
 public class HomeController implements ServletContextAware{
 	
-	private static final Logger logger = LoggerFactory.getLogger(HomeController.class);
 	private ServletContext servletContext;
 	ArrayList<BookInfo> finalBookList;
 	ResponseDataInJson responseObject;
 	ArrayList<String> keywords;
 	
-	/**
-	 * Simply selects the home view to render by returning its name.
-	 */
-	/*@RequestMapping(value = "/", method = RequestMethod.GET)
-	public String home(Locale locale, Model model) {
-		logger.info("Welcome home! The client locale is {}.", locale);		
-		Date date = new Date();
-		DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.LONG, locale);		
-		String formattedDate = dateFormat.format(date);		
-		model.addAttribute("serverTime", formattedDate );	
-		return "home";
-	}*/
-	
+	//Method to fetch books based on entered keywords
 	@RequestMapping(value="getKeywordBooks", method = RequestMethod.POST)
 	public @ResponseBody ResponseDataInJson getKeywordBooks(@RequestBody String str){	
 		ObjectMapper objectMapper = new ObjectMapper();
@@ -98,10 +85,8 @@ public class HomeController implements ServletContextAware{
 			e.printStackTrace();
 		}
 		
-		System.out.println("Request Object length::"+requestObject.getBooksResult().size());
-		System.out.println("Keyword::"+keyword);
 		ArrayList<BookInfo> books = getBooksByKeywords(keyword);
-		System.out.println("Books size for entered keyword::"+books.size());
+		//Sending the retrieved books to refine
 		books = refinedBooks(books,requestObject.getBooksResult(),0);
 		requestObject.getKeywords().add(0,keyword);
 		responseObject.setKeywords(requestObject.getKeywords());
@@ -111,6 +96,7 @@ public class HomeController implements ServletContextAware{
         return responseObject;
 	}
 	
+	//Method to delete a particular keyword
 	@RequestMapping(value="deleteBooks", method = RequestMethod.POST)
 	public @ResponseBody ResponseDataInJson deleteBooks(@RequestBody String str){	
 		ObjectMapper objectMapper = new ObjectMapper();
@@ -128,11 +114,13 @@ public class HomeController implements ServletContextAware{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		System.out.println("Delete Keyword::"+keyword);
+		
 		ArrayList<BookInfo> deleteList = new ArrayList<BookInfo>();
 		ArrayList<BookInfo> originalList = requestObject.getBooksResult();
 		ArrayList<String> originalKeywords = requestObject.getKeywords();
 		
+		//Removing only keywords if more than one keyword associated with the book OR 
+		//remove the book itself if that is the only keyword associated with it
 		for(BookInfo book : originalList){
 			String[] kwrds = book.getAssociatedKeywords().split(",");
 			if(kwrds.length == 1){
@@ -155,7 +143,7 @@ public class HomeController implements ServletContextAware{
 			originalList.remove(book);
 		}
 		
-		//Remove keyword if no book is associated with it
+		//Remove keyword from master keyword list if no book is associated with it
 		ArrayList<String> deleteKey = new ArrayList<>();
 		for(String key : originalKeywords){
 			int c = 0;
@@ -172,7 +160,6 @@ public class HomeController implements ServletContextAware{
 		for(String k : deleteKey){
 			originalKeywords.remove(k);
 		}
-		System.out.println("Books size for after delete::"+originalList.size());
 		originalKeywords.remove(keyword);
 		responseObject.setKeywords(originalKeywords);
         responseObject.setBooksResult(originalList);
@@ -181,6 +168,7 @@ public class HomeController implements ServletContextAware{
         return responseObject;
 	} 
 	
+	//Main method to get books based on image uploaded
 	@RequestMapping(value = "getBooks", method = RequestMethod.POST)
 	public @ResponseBody ModelAndView getBooks(Model model, @RequestParam("fileName")MultipartFile data){
 		 ModelAndView mav = new ModelAndView("results");
@@ -235,9 +223,8 @@ public class HomeController implements ServletContextAware{
 		                		JSONObject tempObj = (JSONObject)keywordsArray.get(i);
 		                		String keyword = tempObj.getString("text");
 		                		String normalizedKeyword = keyword.replaceAll("[^\\w\\s]","");
-			                	System.out.println("Text: " + normalizedKeyword);
-			                	System.out.println("Relevance: " + tempObj.getDouble("relevance"));	    
-			                	//Get the books based on keywords
+			                	
+		                		//Get the books based on keywords
 			                	ArrayList<BookInfo> perKeyBooks = getBooksByKeywords(normalizedKeyword);
 			                	if(perKeyBooks.size() > 0){
 			                		keywords.add(normalizedKeyword);
@@ -247,14 +234,11 @@ public class HomeController implements ServletContextAware{
 		                		break;
 		                	}
 		                }		                
-		                System.out.println("Server File Location=" + serverFile.getAbsolutePath());
-		                System.out.println("Final Books List Size::::::::::::::" + finalBookList.size());
 		                responseObject.setKeywords(keywords);
 		                responseObject.setBooksResult(finalBookList);
 		                responseObject.setSuccess("success");	                
 		                System.out.println("You successfully uploaded file=" + data.getOriginalFilename());
 		                String resultJson = gson.toJson(responseObject);
-		                System.out.println(resultJson);
 		                mav.addObject("dataFromServer",	resultJson);
 		                return mav;
 	                } catch (JSONException je){
@@ -282,6 +266,7 @@ public class HomeController implements ServletContextAware{
 		this.servletContext = servletContext;		
 	}	
 	
+	//OCR library implementation
 	public String extractTextFromImage(String filePath){
 		String extractedText = "";
 		BytePointer outText;
@@ -307,14 +292,15 @@ public class HomeController implements ServletContextAware{
         return extractedText;
 	}
 	
+	//NLP library implementation
 	public JSONObject extractKeywordsFromText(String imageText){
+		//Please replace your Alchemy API here. 
 		AlchemyAPI alchemyObj = AlchemyAPI.GetInstanceFromString("c6105a5cb456edf11b12e2c32d82ec6574d4b5ee");
 		AlchemyAPI_KeywordParams params = new AlchemyAPI_KeywordParams();
 		JSONObject keywordsInJson = new JSONObject();
 		try {
 			Document doc = alchemyObj.TextGetRankedKeywords(imageText, params);
 			keywordsInJson = XML.toJSONObject(getStringFromDocument(doc));
-			System.out.println("Keywords in Json::" + keywordsInJson);
 		} catch (XPathExpressionException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -331,6 +317,7 @@ public class HomeController implements ServletContextAware{
 		return keywordsInJson;
 	}
 	
+	//Helper to NLP method
 	public String getStringFromDocument(Document doc) {
 		try {
 			DOMSource domSource = new DOMSource(doc);
@@ -348,6 +335,7 @@ public class HomeController implements ServletContextAware{
 		}
 	}
 	
+	//Method to hit the openlibrary API and fetch the book results
 	public ArrayList<BookInfo> getBooksByKeywords(String searchString){
 		ArrayList<BookInfo> books = new ArrayList<BookInfo>();
 		String url = "https://openlibrary.org/search.json?title=";
@@ -362,7 +350,6 @@ public class HomeController implements ServletContextAware{
 			con.setRequestProperty("User-Agent", "Mozilla/5.0");
 
 			int responseCode = con.getResponseCode();
-			System.out.println("Response Code : " + responseCode);
 
 			BufferedReader in = new BufferedReader(
 			        new InputStreamReader(con.getInputStream()));
@@ -376,7 +363,6 @@ public class HomeController implements ServletContextAware{
 			
 			//convert into JSONObject
 			JSONObject resultJson = new JSONObject(response.toString());
-			System.out.println("Books received in JSON format:::" + resultJson);
 			
 			//Structuring books result with keywords			
 			JSONArray booksArray = null;
@@ -429,10 +415,11 @@ public class HomeController implements ServletContextAware{
 		return books;
 	}
 	
+	//Refining the results i.e. not adding the book again if it is already there in the list
+	//Just append the new keyword to the existing book.
 	public ArrayList<BookInfo> refinedBooks(ArrayList<BookInfo> books, ArrayList<BookInfo> finalBookList, int flag){
 		for(int i=0;i<books.size();i++){
 			int count = 0;
-			System.out.println("List Size:::"+finalBookList.size());
 			if(finalBookList.size() > 0 && books.get(i).getOpenLibId() != null && books.get(i).getOpenLibId().length() > 0){
 				for(BookInfo b : finalBookList){
 					if(b.getOpenLibId() == null || b.getOpenLibId().length() < 1){
@@ -458,223 +445,4 @@ public class HomeController implements ServletContextAware{
 		}
 		return finalBookList;
 	}
-	
-	public void getBooksByKeywords(String searchString, int keywordsLength){
-		int singleKeywordBookCount = 0;
-		String url = "https://openlibrary.org/search.json?title=";
-		url = url + URLEncoder.encode(searchString) + "&page=1";
-		try {
-			URL urlObj = new URL(url);
-			HttpURLConnection con = (HttpURLConnection) urlObj.openConnection();			
-			// optional default is GET
-			con.setRequestMethod("GET");
-
-			//add request header
-			con.setRequestProperty("User-Agent", "Mozilla/5.0");
-
-			int responseCode = con.getResponseCode();
-			System.out.println("Response Code : " + responseCode);
-
-			BufferedReader in = new BufferedReader(
-			        new InputStreamReader(con.getInputStream()));
-			String inputLine;
-			StringBuffer response = new StringBuffer();
-
-			while ((inputLine = in.readLine()) != null) {
-				response.append(inputLine);
-			}
-			in.close();
-			
-			//convert into JSONObject
-			JSONObject resultJson = new JSONObject(response.toString());
-			System.out.println("Books received in JSON format:::" + resultJson);
-			
-			//Structuring books result with keywords			
-			JSONArray booksArray = null;
-			try{
-				booksArray = resultJson.getJSONArray("docs");
-			} catch(JSONException e){
-				e.printStackTrace();
-			}
-			for(int i=0; i<booksArray.length();i++){
-				BookInfo singleBookInfo = new BookInfo();
-				try{
-					JSONObject singleBookInfoJson = (JSONObject)booksArray.get(i);
-					singleBookInfo.setName(singleBookInfoJson.getString("title"));					
-					String key = singleBookInfoJson.getString("key");
-					key = key.substring(key.indexOf('O'));
-					singleBookInfo.setOpenLibId(key);
-					try{
-						singleBookInfo.setCoverId(singleBookInfoJson.getInt("cover_i"));
-					}catch(JSONException e){
-						JSONArray authorNames = singleBookInfoJson.getJSONArray("author_name");
-						String author = "";
-						for(int j=0; j<authorNames.length();j++){
-							author = author + authorNames.getString(j);
-						}
-						singleBookInfo.setAuthor(author);
-					}					
-					JSONArray authorNames = singleBookInfoJson.getJSONArray("author_name");
-					String author = "";
-					for(int j=0; j<authorNames.length();j++){
-						author = author + authorNames.getString(j);
-					}
-					singleBookInfo.setAuthor(author);
-				}catch(JSONException e){
-					e.printStackTrace();
-				}
-				singleBookInfo.setAssociatedKeywords(searchString);
-				int count = 0;
-				System.out.println("List Size:::"+finalBookList.size());
-				if(finalBookList.size() > 0 && singleBookInfo.getOpenLibId() != null && singleBookInfo.getOpenLibId().length() > 0){
-					for(BookInfo b : finalBookList){
-						if(b.getOpenLibId() == null || b.getOpenLibId().length() < 1){
-							continue;
-						}
-						else if(b.getOpenLibId() == singleBookInfo.getOpenLibId()){
-							String keywords = b.getAssociatedKeywords();
-							keywords = keywords + "," + singleBookInfo.getAssociatedKeywords();
-							count++;
-							break;
-						}
-					}
-				}
-				if(count == 0){
-					finalBookList.add(singleBookInfo);
-					singleKeywordBookCount++;
-				}
-				if(singleKeywordBookCount > 5 && keywordsLength > 10){
-					break;
-				}				
-			}			
-			
-		} catch (MalformedURLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ProtocolException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-	
-	/*public void getBooksByKeywords(String searchString){
-		String url = "http://katalog.stbib-koeln.de:8983/solr/select?rows=20&q=";
-		url = url + URLEncoder.encode(searchString);
-		try {
-			URL urlObj = new URL(url);
-			HttpURLConnection con = (HttpURLConnection) urlObj.openConnection();			
-			// optional default is GET
-			con.setRequestMethod("GET");
-
-			//add request header
-			con.setRequestProperty("User-Agent", "Mozilla/5.0");
-
-			int responseCode = con.getResponseCode();
-			System.out.println("Response Code : " + responseCode);
-
-			BufferedReader in = new BufferedReader(
-			        new InputStreamReader(con.getInputStream()));
-			String inputLine;
-			StringBuffer response = new StringBuffer();
-
-			while ((inputLine = in.readLine()) != null) {
-				response.append(inputLine);
-			}
-			in.close();
-
-			//print result
-			System.out.println(response.toString());
-			
-			//convert into JSONObject
-			JSONObject resultJson = XML.toJSONObject(response.toString());
-			System.out.println("Books received in JSON format:::" + resultJson);
-			
-			//Structuring books result with keywords
-			resultJson = resultJson.getJSONObject("response");
-			resultJson = resultJson.getJSONObject("result");
-			JSONArray booksArray = null;
-			try{
-				booksArray = resultJson.getJSONArray("doc");
-			} catch(JSONException e){
-				booksArray = new JSONArray();
-				try{
-					booksArray.put(resultJson.getJSONObject("doc"));
-				} catch( JSONException exc){
-					System.out.println("JSON Exception error");
-				}
-			}
-			for(int i=0; i<booksArray.length();i++){
-				JSONObject singleBookInfoJson = (JSONObject)booksArray.get(i);
-				JSONArray tempArray = singleBookInfoJson.getJSONArray("arr");
-				BookInfo singleBookInfo = new BookInfo();
-				for(int j = 0; j<tempArray.length(); j++){
-					JSONObject tempObj = (JSONObject)tempArray.get(j);					
-					String name = tempObj.getString("name");
-					if(name.equalsIgnoreCase("Author")){
-						try{
-							singleBookInfo.setAuthor(tempObj.get("str").toString());
-						}catch(JSONException e){
-							JSONArray t = tempObj.getJSONArray("str");
-							String tempStr = "";
-							for(int k=0; k<t.length();k++){
-								tempStr = tempStr + ", " + t.get(k).toString();
-							}
-							singleBookInfo.setAuthor(tempStr);
-						}
-					}else if(name.equalsIgnoreCase("Title")){
-						try{
-							singleBookInfo.setName(tempObj.get("str").toString());
-						}catch(JSONException e){
-							JSONArray t = tempObj.getJSONArray("str");
-							String tempStr = "";
-							for(int k=0; k<t.length();k++){
-								tempStr = tempStr + ", " + t.get(k).toString();
-							}
-							singleBookInfo.setName(tempStr);
-						}
-					}else if(name.equalsIgnoreCase("ISBN")){
-						try{
-							singleBookInfo.setIsbn(tempObj.get("str").toString());
-						}catch(JSONException e){
-							JSONArray t = tempObj.getJSONArray("str");							
-							singleBookInfo.setAuthor(t.get(0).toString());
-						}
-					}					
-				}
-				singleBookInfo.setAssociatedKeywords(searchString);
-				int count = 0;
-				System.out.println("List Size:::"+finalBookList.size());
-				if(finalBookList.size() > 0 && singleBookInfo.getIsbn() != null && singleBookInfo.getIsbn().length() > 0){
-					for(BookInfo b : finalBookList){
-						if(b.getIsbn() == null){
-							continue;
-						}
-						else if(b.getIsbn().equalsIgnoreCase(singleBookInfo.getIsbn())){
-							String keywords = b.getAssociatedKeywords();
-							keywords = keywords + ", " + singleBookInfo.getAssociatedKeywords();
-							count++;
-							break;
-						}
-					}
-				}
-				if(count == 0){
-					finalBookList.add(singleBookInfo);
-				}
-			}
-			
-			
-		} catch (MalformedURLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ProtocolException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}*/
 }

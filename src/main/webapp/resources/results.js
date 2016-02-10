@@ -1,4 +1,6 @@
 var playlist = [];
+
+//Method to arrange content on the page on each activity
 function showAllData(dataFromServer){
 	coverflow('container').remove();
 	coverflow('container').setup({
@@ -14,25 +16,6 @@ function showAllData(dataFromServer){
 	        show: true
 	    });
 	});
-	
-	/*//$('#coverflow').find("*").addBack().off();
-	$('#flip-items').empty();
-	//$('#master').after($('<div id="coverflow"><ul class="flip-items" id="flip-items"></ul></div>'));
-	
-	$.each(dataFromServer.booksResult, function(index, book){
-		var html = '';
-		if(book.coverId == 1){
-			html = '<li><div class="boxed">"'+book.name+'"<br>';
-			html += '-'+book.author+'</div>';
-			html += '<pre style="width:100px;height:40px;word-wrap:break-word;">'+book.associatedKeywords+'</pre></li>';
-			$('#flip-items').append($(html));
-		}else{
-			html = '<li><div class="boxed"><img src="http://covers.openlibrary.org/b/id/';
-			html += book.coverId+'-M.jpg" width="100" height="120"></div>';
-			html += '<pre style="width:100px;height:40px;word-wrap:break-word;">'+book.associatedKeywords+'</pre></li>';
-			$('#flip-items').append($(html));
-		}
-	});*/
 	
 	document.getElementById('img').setAttribute('src','data:image/jpg;base64,'+dataFromServer.base64Img);
 	
@@ -87,14 +70,9 @@ function showAllData(dataFromServer){
 $(document).ready(function() {
 	constructJson(dataFromServer);
 	showAllData(dataFromServer);
-	/*cover = $("#coverflow").flipster({	
-		style: 'flat',
-		start : 0,
-		touch : true,
-		scrollwheel: true		
-	});	*/	
 });
 
+//New keyword submit event
 $(function(){
 	$(document).on('submit','#addKeyword', function(event){
 		event.preventDefault();
@@ -120,14 +98,7 @@ $(function(){
 					dataFromServer = data;
 					constructJson(dataFromServer);
 					$('#keyword').val('');
-					showAllData(dataFromServer);
-					/*cover.flipster('index');
-					$("#coverflow").flipster({	
-						style: 'flat',
-						start : 0,
-						touch : true,
-						scrollwheel: true		
-					});*/		
+					showAllData(dataFromServer);	
 					$('#loading').hide();
 				},
 				error: function(xhr,status,error){
@@ -139,7 +110,7 @@ $(function(){
 	});
 });
 
-/*$('#tags').on('itemRemoved', function(event) {*/
+//remove tag call
 function removeTag(tag){
 	$('#loading').show();
 	$.ajax({
@@ -153,14 +124,7 @@ function removeTag(tag){
 		success: function(data){	
 			dataFromServer = data;
 			constructJson(dataFromServer);
-			showAllData(dataFromServer);
-			/*cover.flipster('index');
-			$("#coverflow").flipster({	
-				style: 'flat',
-				start : 0,
-				touch : true,
-				scrollwheel: true		
-			});*/		
+			showAllData(dataFromServer);		
 			$('#loading').hide();
 		},
 		error: function(xhr,status,error){
@@ -169,6 +133,7 @@ function removeTag(tag){
 	});
 };
 
+//Called when keywords are rearranged
 function reorderArray(start,stop){
 	var booksList = dataFromServer.booksResult;
 	var keywords = dataFromServer.keywords;
@@ -212,15 +177,9 @@ function reorderArray(start,stop){
 	
 	constructJson(dataFromServer);
 	showAllData(dataFromServer);
-	/*cover.flipster('index');
-	$("#coverflow").flipster({	
-		style: 'flat',
-		start : 0,
-		touch : true,
-		scrollwheel: true		
-	});	*/
 }
 
+//formatting the received data to suit the coverflow.js needs
 function constructJson(dataFromServer){
 	playlist = [];
 	$.each(dataFromServer.booksResult, function(index, book){
