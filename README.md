@@ -11,7 +11,7 @@ Basic steps of the application usage:
 - The user will get book recommendations based on the text scanned.
 
 Behind the scene process:
-- The uploaded image undergoes an OCR to extract the text from the image.
+- The uploaded image undergoes an OCR to extract the text from the image. (OCR library used: Tesseract)
 - Alchemy API is used to extract keywords from the entire text.
 - Those keywords are used to search the openlibrary based on their relevance.
 - User can add a new keyword which they think is important.
